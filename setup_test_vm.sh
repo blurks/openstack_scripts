@@ -4,6 +4,8 @@
 # creating new vm everytime, create one beforehand and boot from a snapshot
 # everytime we want to run a test
 
+export APPCONFIG_DIR="$HOME/work/appconfig/apps"
+
 # logfile. leave empty to disable logging
 LOGFILE=./server_creation.log
 
@@ -40,7 +42,7 @@ SEC_GROUP_NAME=
 KEYNAME=
 
 # What should be the name of the instance?
-INSTANCE_NAME=
+INSTANCE_NAME=testserver
 
 # ---- Create the server
 # cf. https://docs.openstack.org/nova/xena/user/launch-instances.html
@@ -88,12 +90,26 @@ echo "associate ip with port" | tee -a $LOGFILE
 openstack floating ip set --port $PORT_ID $IP_ADDRESS | tee -a $LOGFILE
 
 
-
 # ---- Do the deployment
 
 openstack server start $SERVER_ID
 
+# setup server
+cd "$APPCONFIG_DIR/../servers/app-server-setup/"
+fab -H $IP_ADDRESS setup_server
+
+# to test in testing environment, we need a domain name first, otherwise
+# letsencrypt won't work.
+#
+# This part is still interactive.  We might need to adjust the code of
+# clldappconfig to be able to script sudo password etc.  Also `-H` doesn't work
+# yet for the testing environment.
+cd "$APPCONFIG_DIR/apps/wals3/wals3/"
 fab -u cloud -H $IP_ADDRESS deploy:staging
+
+# maybe do some tests here, eg.
+# curl -u wals3:wals3 $IP_ADDRESS
+
 
 # ---- Cleanup
 
