@@ -1,8 +1,15 @@
 #!/bin/bash
 #
-# A script to create a testvm on openstack.  Alternative plan: instead of
+# A script to create a testvm on openstack.
+#
+# requirements:
+#    `apt install python3-openstackclient jq`
+# or alternatively install openstack client via pip:
+#    `pip install python openstackclient`
+#
+# Alternative plan: instead of
 # creating new vm everytime, create one beforehand and boot from a snapshot
-# everytime we want to run a test
+# everytime we want to run a test.
 
 export APPCONFIG_DIR="$HOME/work/appconfig/apps"
 
