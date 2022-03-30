@@ -49,16 +49,16 @@ INSTANCE_NAME=testserver
 
 echo "creating server" | tee $LOGFILE
 SERVER_ID=$(openstack server create \
-					  -f json \
-					  --flavor $FLAVOR_ID \
-					  --image $IMAGE_ID \
-					  --key-name $KEY_NAME \
-					  --security-group $SEC_GROUP_NAME \
-					  --wait \
-					  "$INSTANCE_NAME" \
-				| tee -a $LOGFILE \
-				| jq '.id'
-		 )
+                      -f json \
+                      --flavor $FLAVOR_ID \
+                      --image $IMAGE_ID \
+                      --key-name $KEY_NAME \
+                      --security-group $SEC_GROUP_NAME \
+                      --wait \
+                      "$INSTANCE_NAME" \
+                | tee -a $LOGFILE \
+                | jq '.id'
+         )
 
 
 # You can check if the server was created using `openstack server list`
@@ -75,15 +75,15 @@ SERVER_ID=$(openstack server create \
 
 echo "allocating ip address" | tee -a $LOGFILE
 IP_ADDRESS=$(openstack floating ip create -f json  "public" \
-				 | tee -a $LOGFILE \
-				 | jq '.floating_ip.ip')
+                 | tee -a $LOGFILE \
+                 | jq '.floating_ip.ip')
 
 # get port id
 echo "get portid" | tee -a $LOGFILE
 PORT_ID=$(openstack port list -f json --device-id $SERVER_ID \
-			  | tee -a $LOGFILE \
-			  | jq '.interfaceAttachments[0].port_id'
-	   )
+              | tee -a $LOGFILE \
+              | jq '.interfaceAttachments[0].port_id'
+       )
 
 # associate ip with port
 echo "associate ip with port" | tee -a $LOGFILE
@@ -104,7 +104,7 @@ fab -H $IP_ADDRESS setup_server
 # This part is still interactive.  We might need to adjust the code of
 # clldappconfig to be able to script sudo password etc.  Also `-H` doesn't work
 # yet for the testing environment.
-cd "$APPCONFIG_DIR/apps/wals3/wals3/"
+cd "$APPCONFIG_DIR/wals3/wals3/"
 fab -u cloud -H $IP_ADDRESS deploy:staging
 
 # maybe do some tests here, eg.
