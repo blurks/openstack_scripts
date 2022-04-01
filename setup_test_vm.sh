@@ -4,6 +4,7 @@
 #
 # requirements:
 #    `apt install python3-openstackclient jq`
+#    `pip install virtualenv`
 # or alternatively install openstack client via pip:
 #    `pip install python openstackclient`
 #
@@ -53,6 +54,7 @@ INSTANCE_NAME=testserver
 
 # ---- Create the server
 # cf. https://docs.openstack.org/nova/xena/user/launch-instances.html
+# for detailed api docu cf. https://docs.openstack.org/api-ref/compute/
 
 echo "creating server" | tee $LOGFILE
 SERVER_ID=$(openstack server create \
@@ -101,9 +103,17 @@ openstack floating ip set --port $PORT_ID $IP_ADDRESS | tee -a $LOGFILE
 
 openstack server start $SERVER_ID
 
+# create virtualenv
+VENV_DIR=`mktemp -d`
+virtualenv $VENV_DIR
+source $VENV_DIR/bin/activate
+
+# install appconfig requirements
+$VENV_DIR/bin/pip install clldappconfig
+
 # setup server
 cd "$APPCONFIG_DIR/../servers/app-server-setup/"
-fab -H $IP_ADDRESS setup_server
+$VENV_DIR/bin/fab -H $IP_ADDRESS setup_server
 
 # to test in testing environment, we need a domain name first, otherwise
 # letsencrypt won't work.
@@ -111,8 +121,8 @@ fab -H $IP_ADDRESS setup_server
 # This part is still interactive.  We might need to adjust the code of
 # clldappconfig to be able to script sudo password etc.  Also `-H` doesn't work
 # yet for the testing environment.
-cd "$APPCONFIG_DIR/wals3/wals3/"
-fab -u cloud -H $IP_ADDRESS deploy:staging
+cd "$APPCONFIG_DIR/wals3/"
+$VENV_DIR/bin/fab -H $IP_ADDRESS deploy:staging
 
 # maybe do some tests here, eg.
 # curl -u wals3:wals3 $IP_ADDRESS
@@ -120,6 +130,11 @@ fab -u cloud -H $IP_ADDRESS deploy:staging
 
 # ---- Cleanup
 
+# delete virtualenv
+deactivate
+rm -rf $VENV_DIR
+
+# delte test vm
 openstack server stop $SERVER_ID
 openstack floating ip delete $IP_ADDRESS
 openstack server delete $SERVER_ID
